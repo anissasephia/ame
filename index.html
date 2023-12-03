@@ -16,10 +16,19 @@
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
 	<link rel="stylesheet"
 		href="https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-locatecontrol/v0.43.0/L.Control.Locate.css">
+
 	<style>
 		#map {
 			width: 100%;
 			height: 450px;
+		}
+
+		.green-option {
+			color: green;
+		}
+
+		.red-option {
+			color: red;
 		}
 	</style>
 </head>
@@ -35,18 +44,40 @@
 								<div class="row">
 									<div class="col-sm">
 										<div class="form-group">
-											<label for="nama"><strong>Nama Objek</strong></label>
+											<label for="nama"><strong>Nama Gang</strong></label>
 											<input type="text" class="form-control text-primary" id="nama" name="nama"
-												placeholder="Nama objek" value="">
+												placeholder="Gang+Objek terdekat" value="">
 										</div>
 									</div>
 								</div>
 								<div class="row">
 									<div class="col-sm">
 										<div class="form-group">
-											<label for="deskripsi"><strong>Deskripsi</strong></label>
+											<label for="deskripsi"><strong>Icon</strong></label>
+											<select class="form-control text-primary" id="status" name="status">
+												<option value="dungeon">dungeon</option>
+											</select>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm">
+										<div class="form-group">
+											<label for="deskripsi"><strong>Alamat</strong></label>
 											<textarea type="text" class="form-control text-primary" id="deskripsi"
-												name="deskripsi" placeholder="Deskripsi" rows="3"></textarea>
+												name="deskripsi" placeholder="Alamat Gang/Portal berada"
+												rows="4"></textarea>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-sm">
+										<div class="form-group">
+											<label for="deskripsi"><strong>Status</strong></label>
+											<select class="form-control text-primary" id="status" name="status">
+												<option value="open" class="green-option">Open</option>
+												<option value="closed" class="red-option">Closed</option>
+											</select>
 										</div>
 									</div>
 								</div>
@@ -144,25 +175,26 @@
 		function dragMarker(e) {
 			let latlng = e.target.getLatLng();
 
-			//Displays coordinates on the form
+			// Displays coordinates on the form
 			document.getElementById("latitude").value = latlng.lat.toFixed(5);
 			document.getElementById("longitude").value = latlng.lng.toFixed(5);
 
-			//Change the map center based on the marker location
-			map.flyTo(new L.LatLng(latlng.lat.toFixed(9), latlng.lng.toFixed(5)));
+			// Change the map center based on the marker location
+			map.flyTo(new L.LatLng(latlng.lat.toFixed(5), latlng.lng.toFixed(5)));
 		}
 
 		function mapMovement(e) {
 			let mapcenter = map.getCenter();
 
-			//Displays coordinates on the form
+			// Displays coordinates on the form
 			document.getElementById("latitude").value = mapcenter.lat.toFixed(5);
 			document.getElementById("longitude").value = mapcenter.lng.toFixed(5);
 
-			//Create marker
+			// Create marker
 			marker.setLatLng([mapcenter.lat.toFixed(5), mapcenter.lng.toFixed(5)]).update();
 			marker.on('dragend', dragMarker);
 		}
+
 
 		function mapCenter(e) {
 			let mapcenter = map.getCenter();
@@ -207,7 +239,7 @@
 			.addTo(map);
 
 		// Submit to google spreadsheet
-		const scriptURL = 'https://script.google.com/macros/s/AKfycbxfGSOTNaUCZBW9o7cwi-Q77CkuIZiqjQXAP6IxsNKD4w2LI_nrPJzkRRvQwsSJSwkr/exec';
+		const scriptURL = 'https://script.google.com/macros/s/AKfycbwHasGdZSj6lJFoLtdDsKG54B7nFmitQ_PLHaxWCNQvXepEIDxkcbEW6WcWVh8Va056/exec';
 		const form = document.forms['submit-to-google-sheet'];
 		//mengeksekusi sebuah proses fetch(berinteraksi dg API)
 		const btnSimpan = document.querySelector('.btn-simpan');
@@ -236,6 +268,9 @@
 			window.location.reload();
 		}
 	</script>
+
+
+
 </body>
 
 </html>

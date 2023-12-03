@@ -7,6 +7,15 @@
 	<title>Ini Peta Interaktif</title>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+	<!-- fontawsome5 -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css"
+		integrity="sha512-SzlrxWUlpfuzQ+pcUCosxcglQRNAq/DZjVsC0lE40xsADsfeQoEypE+enwcOiGjk/bSuGGKHEyjSoQ1zVisanQ=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<!--MarkerCluster-->
+	<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.1.0/dist/MarkerCluster.Default.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.1.0/dist/MarkerCluster.css" />
+
+
 	<style>
 		html,
 		body,
@@ -14,6 +23,44 @@
 			height: 100%;
 			width: 100%;
 			margin: 0;
+		}
+
+		/* Icon Marker */
+		.leaflet-div-icon {
+			background-color: transparent;
+			border: none;
+			border-radius: 0;
+			text-align: center;
+			line-height: 24px;
+			color: rgb(236, 133, 49);
+			/* Font color */
+		}
+
+		.custom-button {
+			background-color: #ffffff;
+			/* Set your default background color */
+			border: 1px solid #878787;
+			color: rgb(117, 117, 117);
+			padding: 10px 15px;
+			/* Adjust padding as needed */
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+			cursor: pointer;
+			transition: background-color 0.3s;
+			/* Add a smooth transition effect */
+		}
+
+		/* Center the icon within the button */
+		.custom-button i {
+			vertical-align: middle;
+		}
+
+		/* Change the background color on hover */
+		.custom-button:hover {
+			background-color: #b3b3b3;
+			/* Set your desired hover background color */
 		}
 	</style>
 </head>
@@ -23,17 +70,31 @@
 	<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+	<script src="https://unpkg.com/leaflet.markercluster@1.1.0/dist/leaflet.markercluster.js"></script>
 	<script>
-		// yogyakarta
 		var map = L.map('map').setView([-7.797068, 110.370529], 13);
 
-		// basemap
-		var basemap = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-			maxZoom: 18
-		}).addTo(map);
+		var basemap1 = L.tileLayer(
+			"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+			attribution: '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://www.unsorry.net" target="_blank">unsorry @2022</a>',
+		}
+		);
 
-		// Export Button
-		var showExport = '<button onclick="loadlayer()" title="Refresh map" class="">reload</button>';
+		var basemap2 = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+			subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+			attribution: 'Google Satellite | <a href="https://unsorry.net" target="_blank">unsorry@2020</a>'
+		});
+
+		var basemaps = {
+			"OpenStreetMap": basemap1,
+			"Google Satellite": basemap2,
+		};
+
+		L.control.layers(basemaps).addTo(map);
+
+		basemap1.addTo(map); // Add default basemap
+
+		var showExport = '<button onclick="loadlayer()" title="Refresh map" class="custom-button"><i class="fas fa-redo"></i></button>';
 
 		var showExportButton = new L.Control({ position: "topright" });
 		showExportButton.onAdd = function (map) {
@@ -44,7 +105,34 @@
 		showExportButton.addTo(map);
 
 		function loadlayer() {
+			// Create marker cluster group with custom icon
+			var markers = L.markerClusterGroup({
+				iconCreateFunction: function (cluster) {
+					var childCount = cluster.getChildCount();
+					var className = 'leaflet-div-icon';
+
+					// Customize the cluster icon similar to individual markers
+					return L.divIcon({
+						html: '<div><i class="fas fa-dungeon fa-2x"></i><span>' + childCount + '</span></div>', // Use fa-2x for a larger icon',
+						className: className,
+						iconSize: [40, 40], // Set the icon size
+						iconAnchor: [20, 20], // Set the icon anchor
+					});
+				}
+			});
+
 			var point = L.geoJson(null, {
+				pointToLayer: function (feature, latlng) {
+					// Use Font Awesome icon for the marker
+					return L.marker(latlng, {
+						icon: L.divIcon({
+							className: 'leaflet-div-icon',
+							html: '<i class="fas fa-dungeon fa-lg"></i>', // Use fa-lg for a larger icon
+							iconSize: [20, 20], // Set the icon size
+							iconAnchor: [10, 10], // Set the icon anchor
+						}),
+					});
+				},
 				onEachFeature: function (feature, layer) {
 					var popupContent = "<h4>" + feature.properties.nama + "</h4>" +
 						"<p>" + feature.properties.deskripsi + "</p>";
@@ -55,14 +143,18 @@
 					});
 				},
 			});
-			$.getJSON("https://script.google.com/macros/s/AKfycbyB4KkbncRIQvdWETETaztBypUYZx_PD7mloiuRd1CN82xGpjHsz5DlD7XT7hhen9Hf/exec", function (data) {
+
+			$.getJSON("https://script.google.com/macros/s/AKfycbyKMnEYrb-XIbuvOD9DOGwCewnWXN4E4KdJzdyeObZHuwXHB_pe9GwTuQVjslpPl3pd/exec", function (data) {
 				point.addData(data);
-				map.addLayer(point);
+				markers.addLayer(point);
+				map.addLayer(markers); // Add the marker cluster group to the map
 				map.fitBounds(point.getBounds());
 			});
 		}
 
+
 		loadlayer();
 	</script>
 </body>
+
 </html>

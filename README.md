@@ -5,3 +5,4 @@ Peta lokasi objek form input data dan web map untuk konten React Native dalam ra
 ## Stack
 1. HTML
 2. Spreadsheet Apps Script
+3. Fontawsome6
