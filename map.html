@@ -33,7 +33,7 @@
 
 		.navbar {
 			background-color: #ffffff;
-			padding: 13px;
+			padding: 5px;
 			text-align: center;
 			font-weight: bold;
 			color: rgb(136, 83, 241);
@@ -145,7 +145,39 @@
 			return this._div;
 		};
 		showExportButton.addTo(map);
-
+		/* GPS enabled geolocation control set to follow the user's location */
+		var locateControl = L.control
+			.locate({
+				position: "topleft",
+				drawCircle: true,
+				follow: true,
+				setView: true,
+				keepCurrentZoomLevel: true,
+				markerStyle: {
+					weight: 1,
+					opacity: 0.8,
+					fillOpacity: 0.8,
+				},
+				circleStyle: {
+					weight: 1,
+					clickable: false,
+				},
+				icon: "fa fa-crosshairs",
+				metric: true,
+				strings: {
+					title: "Lokasi Anda",
+					popup: "Lokasi Anda sekarang di sini<br>Akurasi {distance} {unit}",
+					outsideMapBoundsMsg: "Sepertinya Anda berada di luar batas Peta.",
+				},
+				locateOptions: {
+					maxZoom: 18,
+					watch: true,
+					enableHighAccuracy: true,
+					maximumAge: 10000,
+					timeout: 10000,
+				},
+			})
+			.addTo(map);
 		function loadlayer() {
 			// Create marker cluster group with custom icon
 			var markers = L.markerClusterGroup({
@@ -189,8 +221,10 @@
 					var buttonColorClass = feature.properties.status === 'open' ? 'bg-green-500 text-white' : 'bg-red-500 text-white';
 					var buttonText = feature.properties.status === 'open' ? 'Open' : 'Closed';
 
+					// ... existing code ...
+
 					var popupContent =
-						'<div class="card h-[150px] w-[200px]">' +
+						'<div class="card h-[200px] w-[200px]">' +
 						'<div class="card-header">' +
 						'<h4 class="font-medium text-xl">' + feature.properties.nama + '</h4>' +
 						'</div>' +
@@ -198,49 +232,18 @@
 						'<p>' + feature.properties.deskripsi + '</p>' +
 						'<p>Waktu: ' + formattedDateTime + '</p>' +
 						'<button id="status" class="rounded-full px-4 py-2 ' + buttonColorClass + ' block mx-auto" style="margin-top: 2px;">' + buttonText + '</button>' +
+						'<button id="editButton" class="rounded-full px-4 py-2 bg-blue-500 text-white block mx-auto mt-2" onclick="editStatus(' + feature.properties.id + ')">Edit Status</button>' + // Add Edit button
 						'<br>' +
 						'</div>' +
 						'</div>';
-					layer.bindPopup(popupContent);
+
+					layer.bindPopup(popupContent)
 
 
 				},
 			});;
-			/* GPS enabled geolocation control set to follow the user's location */
-			var locateControl = L.control
-				.locate({
-					position: "topleft",
-					drawCircle: true,
-					follow: true,
-					setView: true,
-					keepCurrentZoomLevel: true,
-					markerStyle: {
-						weight: 1,
-						opacity: 0.8,
-						fillOpacity: 0.8,
-					},
-					circleStyle: {
-						weight: 1,
-						clickable: false,
-					},
-					icon: "fa fa-crosshairs",
-					metric: true,
-					strings: {
-						title: "Lokasi Anda",
-						popup: "Lokasi Anda sekarang di sini<br>Akurasi {distance} {unit}",
-						outsideMapBoundsMsg: "Sepertinya Anda berada di luar batas Peta.",
-					},
-					locateOptions: {
-						maxZoom: 18,
-						watch: true,
-						enableHighAccuracy: true,
-						maximumAge: 10000,
-						timeout: 10000,
-					},
-				})
-				.addTo(map);
 
-			$.getJSON("https://script.google.com/macros/s/AKfycbzL6bfvTANpT3uvUcdsUEw3gcfxPO-yOarQPz3DXld8hcmeszxUEXdT5GvtusCqfPyP/exec", function (data) {
+			$.getJSON("https://script.google.com/macros/s/AKfycbw_MaSa0ZM-N1WtYp06am9dZzh5UzftmDZag1efnMkXAZzpgq76xwbKWciRpkKRyUTQ/exec", function (data) {
 				point.addData(data);
 				markers.addLayer(point);
 				map.addLayer(markers); // Add the marker cluster group to the map
@@ -252,6 +255,38 @@
 			// 	return timestamp.split("T")[0] + " " + timestamp.split("T")[1].split(".")[0];
 			// }
 		}
+
+		function editStatus(id) {
+			var newStatus = prompt("Enter the new status (open/closed):");
+			if (newStatus && (newStatus.toLowerCase() === 'open' || newStatus.toLowerCase() === 'closed')) {
+				// Update the 'status' property in the GeoJSON data
+				point.eachLayer(function (layer) {
+					if (layer.feature.properties.id === id) {
+						layer.feature.properties.status = newStatus.toLowerCase();
+						layer.setStyle({ fillColor: newStatus.toLowerCase() === 'open' ? 'green' : 'red' }); // Update marker color
+						layer._popup.setContent(getUpdatedPopupContent(layer.feature)); // Update popup content
+					}
+				});
+			} else {
+				alert("Invalid status. Please enter 'open' or 'closed'.");
+			}
+		}
+
+		function getUpdatedPopupContent(feature) {
+			'<div class="card h-[200px] w-[200px]">' +
+				'<div class="card-header">' +
+				'<h4 class="font-medium text-xl">' + feature.properties.nama + '</h4>' +
+				'</div>' +
+				'<div class="card-body">' +
+				'<p>' + feature.properties.deskripsi + '</p>' +
+				'<p>Waktu: ' + formattedDateTime + '</p>' +
+				'<button id="status" class="rounded-full px-4 py-2 ' + buttonColorClass + ' block mx-auto" style="margin-top: 2px;">' + buttonText + '</button>' +
+				'<button id="editButton" class="rounded-full px-4 py-2 bg-blue-500 text-white block mx-auto mt-2" onclick="editStatus(' + feature.properties.id + ')">Edit Status</button>' + // Add Edit button
+				'<br>' +
+				'</div>' +
+				'</div>';
+		}
+
 		loadlayer();
 	</script>
 </body>
