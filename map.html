@@ -25,15 +25,47 @@
 			margin: 0;
 		}
 
+		/*navbar*/
+		body {
+			margin: 0;
+			font-family: Arial, sans-serif;
+		}
+
+		.navbar {
+			background-color: #ffffff;
+			padding: 13px;
+			text-align: center;
+			font-weight: bold;
+			color: rgb(136, 83, 241);
+		}
+
+		.container {
+			max-width: 1200px;
+			margin: 0 auto;
+		}
+
+		.navbar-icon {
+			font-size: 24px;
+			color: white;
+		}
+
+		.dungeon-icon {
+			font-size: 30px;
+			/* Adjust the size as needed */
+			color: rgb(136, 83, 241);
+			/* Set the color as needed */
+			margin-right: 5px;
+			margin-top: 10px;
+		}
+
 		/* Icon Marker */
 		.leaflet-div-icon {
 			background-color: transparent;
 			border: none;
-			border-radius: 0;
+			border-radius: 50%;
 			text-align: center;
 			line-height: 24px;
-			color: rgb(236, 133, 49);
-			/* Font color */
+			color: rgb(210, 148, 239);
 		}
 
 		.custom-button {
@@ -66,11 +98,21 @@
 </head>
 
 <body>
+	<div class="navbar">
+		<div class="container">
+			<!-- Navbar content goes here -->
+			<i class="dungeon-icon"><i class="fa-solid fa-dungeon"></i></i> <!-- Dungeon icon -->
+			PETAL
+		</div>
+	</div>
 	<div id="map"></div>
 	<script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 	<script src="https://unpkg.com/leaflet.markercluster@1.1.0/dist/leaflet.markercluster.js"></script>
+	<script
+		src="https://api.tiles.mapbox.com/mapbox.js/plugins/leaflet-locatecontrol/v0.43.0/L.Control.Locate.min.js"></script>
+	<script src="https://cdn.tailwindcss.com"></script>
 	<script>
 		var map = L.map('map').setView([-7.797068, 110.370529], 13);
 
@@ -113,7 +155,7 @@
 
 					// Customize the cluster icon similar to individual markers
 					return L.divIcon({
-						html: '<div><i class="fas fa-dungeon fa-2x"></i><span>' + childCount + '</span></div>', // Use fa-2x for a larger icon',
+						html: '<div><i class="fa-solid fa-location-dot fa-2x"></i></i><span>' + childCount + '</span></div>', // Use fa-2x for a larger icon',
 						className: className,
 						iconSize: [40, 40], // Set the icon size
 						iconAnchor: [20, 20], // Set the icon anchor
@@ -123,26 +165,80 @@
 
 			var point = L.geoJson(null, {
 				pointToLayer: function (feature, latlng) {
-					// Use Font Awesome icon for the marker
 					return L.marker(latlng, {
 						icon: L.divIcon({
 							className: 'leaflet-div-icon',
-							html: '<i class="fas fa-dungeon fa-lg"></i>', // Use fa-lg for a larger icon
-							iconSize: [20, 20], // Set the icon size
-							iconAnchor: [10, 10], // Set the icon anchor
+							html: '<i class="fa-solid fa-location-dot fa-lg"></i>',
+							iconSize: [20, 20],
+							iconAnchor: [10, 10],
 						}),
 					});
 				},
 				onEachFeature: function (feature, layer) {
-					var popupContent = "<h4>" + feature.properties.nama + "</h4>" +
-						"<p>" + feature.properties.deskripsi + "</p>";
-					layer.on({
-						click: function (e) {
-							point.bindPopup(popupContent);
-						},
-					});
+					// Convert the timestamp to a JavaScript Date object
+					var timestamp = new Date(feature.properties.timestamp);
+
+					// Format the date and time
+					var formattedDateTime =
+						timestamp.getFullYear() + '-' +
+						('0' + (timestamp.getMonth() + 1)).slice(-2) + '-' +
+						('0' + timestamp.getDate()).slice(-2) + ' ' +
+						('0' + timestamp.getHours()).slice(-2) + ':' +
+						('0' + timestamp.getMinutes()).slice(-2) + ':' +
+						('0' + timestamp.getSeconds()).slice(-2);
+					var buttonColorClass = feature.properties.status === 'open' ? 'bg-green-500 text-white' : 'bg-red-500 text-white';
+					var buttonText = feature.properties.status === 'open' ? 'Open' : 'Closed';
+
+					var popupContent =
+						'<div class="card h-[150px] w-[200px]">' +
+						'<div class="card-header">' +
+						'<h4 class="font-medium text-xl">' + feature.properties.nama + '</h4>' +
+						'</div>' +
+						'<div class="card-body">' +
+						'<p>' + feature.properties.deskripsi + '</p>' +
+						'<p>Waktu: ' + formattedDateTime + '</p>' +
+						'<button id="status" class="rounded-full px-4 py-2 ' + buttonColorClass + ' block mx-auto" style="margin-top: 2px;">' + buttonText + '</button>' +
+						'<br>' +
+						'</div>' +
+						'</div>';
+					layer.bindPopup(popupContent);
+
+
 				},
-			});
+			});;
+			/* GPS enabled geolocation control set to follow the user's location */
+			var locateControl = L.control
+				.locate({
+					position: "topleft",
+					drawCircle: true,
+					follow: true,
+					setView: true,
+					keepCurrentZoomLevel: true,
+					markerStyle: {
+						weight: 1,
+						opacity: 0.8,
+						fillOpacity: 0.8,
+					},
+					circleStyle: {
+						weight: 1,
+						clickable: false,
+					},
+					icon: "fa fa-crosshairs",
+					metric: true,
+					strings: {
+						title: "Lokasi Anda",
+						popup: "Lokasi Anda sekarang di sini<br>Akurasi {distance} {unit}",
+						outsideMapBoundsMsg: "Sepertinya Anda berada di luar batas Peta.",
+					},
+					locateOptions: {
+						maxZoom: 18,
+						watch: true,
+						enableHighAccuracy: true,
+						maximumAge: 10000,
+						timeout: 10000,
+					},
+				})
+				.addTo(map);
 
 			$.getJSON("https://script.google.com/macros/s/AKfycbzL6bfvTANpT3uvUcdsUEw3gcfxPO-yOarQPz3DXld8hcmeszxUEXdT5GvtusCqfPyP/exec", function (data) {
 				point.addData(data);
@@ -150,9 +246,12 @@
 				map.addLayer(markers); // Add the marker cluster group to the map
 				map.fitBounds(point.getBounds());
 			});
+
+			// function formatTimestamp(timestamp) {
+			// 	// Customize this function to format the timestamp as needed
+			// 	return timestamp.split("T")[0] + " " + timestamp.split("T")[1].split(".")[0];
+			// }
 		}
-
-
 		loadlayer();
 	</script>
 </body>
