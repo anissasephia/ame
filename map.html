@@ -144,6 +144,9 @@
 			this._div.innerHTML = showExport
 			return this._div;
 		};
+		var urlParams = new URLSearchParams(window.location.search);
+		var lat = urlParams.get('lat');
+		var lon = urlParams.get('lon');
 		showExportButton.addTo(map);
 		/* GPS enabled geolocation control set to follow the user's location */
 		var locateControl = L.control
